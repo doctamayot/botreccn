@@ -46,23 +46,36 @@ function obtenerOCrearSesion(phoneNumber) {
 app.post('/webhook', async (req, res) => {
     const body = req.body;
 
+    // Log para ver qué tipo de evento está enviando Meta
+    console.log("📌 Evento recibido de Meta:", JSON.stringify(body, null, 2));
+
     if (body.object) {
-        res.sendStatus(200); // Responder 200 de inmediato a Meta
+        const entry = body.entry?.[0];
+        const changes = entry?.changes?.[0];
+        const value = changes?.value;
+        const message = value?.messages?.[0];
 
-        if (body.entry && body.entry[0].changes && body.entry[0].changes[0].value.messages && body.entry[0].changes[0].value.messages[0]) {
-            const message = body.entry[0].changes[0].value.messages[0];
+        // Si es un mensaje real de un usuario
+        if (message && message.text) {
             const phoneNumber = message.from;
-            const text = message.text ? message.text.body : '';
+            const text = message.text.body;
 
-            if (text) {
-                try {
-                    const aiResponse = await getGeminiResponse(phoneNumber, text);
-                    await sendWhatsAppMessage(phoneNumber, aiResponse);
-                } catch (error) {
-                    console.error('❌ Error procesando en Vercel:', error);
-                }
+            console.log(`📩 PROCESANDO MENSAJE de ${phoneNumber}: "${text}"`);
+
+            try {
+                const aiResponse = await getGeminiResponse(phoneNumber, text);
+                console.log(`🤖 Respuesta de Gemini generada: "${aiResponse.substring(0, 50)}..."`);
+
+                await sendWhatsAppMessage(phoneNumber, aiResponse);
+                console.log(`✅ Mensaje despachado a WhatsApp`);
+            } catch (error) {
+                console.error('❌ Error en el flujo:', error.message || error);
             }
+        } else if (value?.statuses) {
+            console.log("ℹ️ Notificación de estado (entrega/lectura). Se ignora.");
         }
+
+        res.sendStatus(200);
     } else {
         res.sendStatus(404);
     }
