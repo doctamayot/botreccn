@@ -84,7 +84,7 @@ async function getGeminiResponse(phoneNumber, userMessage) {
     const sesion = obtenerOCrearSesion(phoneNumber);
 
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-3.5-flash",
+        model: "gemini-3.5-flash-lite",
         systemInstruction: `Eres el asistente virtual oficial de "Reconciliemos Colombia", un Centro de Conciliación autorizado.
 
 PORTAFOLIO DE SERVICIOS (LO QUE SÍ HACEMOS):
